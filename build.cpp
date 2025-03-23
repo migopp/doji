@@ -6,23 +6,33 @@
 #define ANSI_RED "\033[31m"
 #define ANSI_GREEN "\033[32m"
 
+void build_log(std::string l) {
+  std::cout << ANSI_GREEN << "[BUILD]\t" << ANSI_RESET << l << std::endl;
+}
+
+void err_log(std::string l) {
+  std::cout << ANSI_RED << "[ERR]\t" << ANSI_RESET << l << std::endl;
+}
+
 int main(void) {
-  // Create build target directory
-  if (std::filesystem::create_directory("target")) {
-    std::cout << ANSI_GREEN << "[BUILD]\t" << ANSI_RESET
-              << "Created `target` directory" << std::endl;
+  // Determine if need to configure build env
+  if (!std::filesystem::exists("./target/doji")) {
+    // Create build target directory
+    if (!std::filesystem::create_directory("target")) {
+      err_log("Failed to create `target` directory");
+      return -1;
+    }
+    build_log("Created `target` directory");
   } else {
-    std::cerr << ANSI_RED << "[ERR]\t" << ANSI_RESET
-              << "Failed to create `target` directory" << std::endl;
-    return -1;
+    build_log("`target` directory already exists, skipping...");
   }
 
   // Compile `doji`
-  int rc = std::system("g++ -o ./target/doji doji.cpp");
-  if (rc < 0) {
-    std::cerr << ANSI_RED << "[ERR]\t" << ANSI_RESET
-              << "Failed to compile `doji`" << std::endl;
+  if (std::system("g++ -std=c++20 -o ./target/doji doji.cpp -lncurses") < 0) {
+    err_log("Failed to compile `doji`");
     return -1;
   }
+  build_log("Compiled `doji` @ ./target/doji");
+
   return 0;
 }
